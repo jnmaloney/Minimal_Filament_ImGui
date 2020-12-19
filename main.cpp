@@ -25,21 +25,30 @@ void main_loop() { loop(); }
 int main() 
 {
     EM_ASM({
-        const ctx = canvas.getContext("webgl2", defaults);
-        ctx.getExtension('WEBGL_compressed_texture_s3tc');
-        ctx.getExtension('WEBGL_compressed_texture_astc');
-        ctx.getExtension('WEBGL_compressed_texture_etc');
-        const handle = GL.registerContext(ctx, defaults);
-        GL.makeContextCurrent(handle);
+        ctx = canvas_myengine.getContext("webgl2", settings_myengine);
+        myengine.handle = GL.registerContext(ctx, settings_myengine);
+        GL.makeContextCurrent(myengine.handle);
+        myengine.ctx = ctx;
+    });
+
+    EM_ASM({
+        myengine.comp = canvas_composite.getContext("2d");
     });
 
     loop = [&] {    
 
-        glClearColor(0.2f, 0.9f, 0.9f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        if (g_rm.pending) return;
 
+        EM_ASM({
+            GL.makeContextCurrent(myengine.handle_offscreen);
+        });
         loop_filament();
 
+        EM_ASM({
+            GL.makeContextCurrent(myengine.handle);
+        });
+
+        glClear(GL_COLOR_BUFFER_BIT);
         ImGui::SetCurrentContext(g_imctx);
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplEmscripten_NewFrame();
@@ -50,6 +59,11 @@ int main()
         ImGui::Text("button %i", io.MouseDown[0]);
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        EM_ASM({
+            myengine.comp.drawImage(canvas_filament, 0, 0);
+            myengine.comp.drawImage(canvas_myengine, 0, 0);
+        });
     };
 
     g_imctx = ImGui::CreateContext();
@@ -58,7 +72,16 @@ int main()
     ImGui_ImplEmscripten_Init();
     ImGui_ImplOpenGL3_Init();
     ImGui::StyleColorsLight();
-    
+    ImGui_ImplOpenGL3_CreateDeviceObjects();
+
+    EM_ASM({
+        const ctx_offscreen = canvas_filament.getContext("webgl2", settings_filamenet);
+        ctx_offscreen.getExtension('WEBGL_compressed_texture_s3tc');
+        ctx_offscreen.getExtension('WEBGL_compressed_texture_astc');
+        ctx_offscreen.getExtension('WEBGL_compressed_texture_etc');
+        myengine.handle_offscreen = GL.registerContext(ctx_offscreen, settings_filamenet);
+        GL.makeContextCurrent(myengine.handle_offscreen);
+    });
     init_filament();
 
     enum 

@@ -21,27 +21,45 @@
   <body>
 
     <div class="emscripten_border">
-      <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" width=800 height=600></canvas>
+      <canvas class="emscripten" id="canvas_composite" oncontextmenu="event.preventDefault()" width=800 height=600></canvas>
+    </div>
+
+    <div class="emscripten_border">
+      <canvas hidden class="emscripten" id="canvas_myengine" oncontextmenu="event.preventDefault()" width=800 height=600></canvas>
+    </div>
+
+    <div class="emscripten_border">
+      <canvas class="emscripten" id="canvas_filament" oncontextmenu="event.preventDefault()" width=800 height=600></canvas>
     </div>
 
     <script type='text/javascript'>
 
-        const defaults = {
+      canvas_myengine.style.visibility='hidden';
+      canvas_filament.style.visibility='hidden';
+
+      var myengine = {};
+
+        const settings_myengine = {
+            majorVersion: 2,
+            minorVersion: 0,
+            antialias: false,
+            depth: true,
+            alpha: true
+        };
+
+        const settings_filamenet = {
             majorVersion: 2,
             minorVersion: 0,
             antialias: false,
             depth: true,
             alpha: false
-        };
+        };        
 
       var Module = {
         preRun: [],
         postRun: [],
         print: function(text){},
         printErr: function(text){},
-        canvas: (function() {
-          return document.getElementById('canvas');
-        })(),
         setStatus: function(text) {},
         totalDependencies: 0,
         monitorRunDependencies: function(left) {
